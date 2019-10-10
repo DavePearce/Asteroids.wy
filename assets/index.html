@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
 <html> <head>
     <title></title>
-    <link href="tmp.css" rel="stylesheet" type="text/css">
+    <link href="asteroids.css" rel="stylesheet" type="text/css">
     <script type="text/javascript" src="../bin/js/std.js"></script>
     <script type="text/javascript" src="../bin/js/js.js"></script>
     <script type="text/javascript" src="../bin/js/html.js"></script>     
@@ -10,7 +10,9 @@
 
 <body bgcolor="#ffffff">
   <h1>HTML Test</h1>
-  <canvas id="mycanvas" width="400" height="400"></canvas>
+  <center>
+    <canvas id="mycanvas" width="1000" height="1000"></canvas>
+  </center>
   <script>
     function mainLoop(canvas,state) {      
       main$draw(canvas,state);
@@ -19,7 +21,7 @@
     }
 
     window.onload = function() { 
-      var canvas = document.getElementById("mycanvas");
+    var canvas = document.getElementById("mycanvas");
       var state = main$init(canvas.width,canvas.height);
       mainLoop(canvas,state);
     }
