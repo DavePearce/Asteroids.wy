@@ -1,100 +1,134 @@
 import string from std::ascii
-
 import uint from std::integer
+
+import std::vector
+import Vector from std::vector
+
 import from_string from js::util
 import Document from w3c::dom
 import HTMLCanvasElement from w3c::dom
 import CanvasRenderingContext2D from w3c::dom
 
-import Rectangle from shapes
-import Polygon from shapes
-import Point from shapes
-import translate from shapes
-import wrap from shapes
-import scale from shapes
-import rotate from shapes
+import keyboard
+import vec2d
+import Vec2D from vec2d
 
-public type Object is {
-    Polygon polygon,
-    Point origin,
-    Point direction,
-    uint angle,
-    uint scale
-} where angle < 360
+import Point from point
 
-public function Object(Polygon p) -> Object:
-    Point zero = {x:0,y:0}
-    return {polygon:p,origin:zero,direction:zero,scale:1,angle:0}
+import object
+import Object from object
 
-public function move(Object o, Rectangle window) -> Object:
-    o.origin = translate(o.origin,o.direction)
-    o.origin = wrap(o.origin, window)
-    return o
+import polygon
+import Polygon from polygon
+
+import rectangle
+import Rectangle from rectangle
+
+/** 
+ * Precision determines the accuracy to which fixed decimal
+ * calculations are performed.  This matters because we don't 
+ * have floating point numbers in Whiley.
+ */
+final int PRECISION = 1000
 
 public type State is {
     // playing area
     Rectangle window,
+    // Bullet repeat count
+    int repeat,
     // Space objects
-    Object[] objects
-} where |objects| > 0
+    Vector<Object> objects
+} where objects.length > 0
 
 public final Polygon SHIP = [{x:-3,y:-3},{x:0,y:6},{x:3,y:-3}]
+public final Polygon BULLET = [{x:-1,y:-1},{x:-1,y:1},{x:1,y:1},{x:1,y:-1}]
 
+/**
+ * Construct a bullet being fired in a given angle
+ */
+function bullet(Point p, int angle) -> Object:
+    Object bullet = object::create(BULLET)
+    // Set scale
+    bullet.scale = 5 * PRECISION
+    // Set location
+    bullet.origin = p
+    // Detemine direction vector
+    bullet.direction = vec2d::unit(angle,10*PRECISION)
+    //
+    return bullet
+
+/**
+ * Intialise the game in a window with given dimensions.
+ */
 public export function init(uint width, uint height) -> State:
-    Object obj1 = Object(SHIP)
-    obj1.scale = 5
-    obj1.direction = {x:3,y:5}
-    obj1.origin = {x:width/2,y:height/2}
+    Object obj1 = object::create(SHIP)
+    obj1.scale = 5 * PRECISION
+    obj1.origin = {x:(PRECISION*width)/2,y:(PRECISION*height)/2}
     //
     return {
-        window:{origin:{x:0,y:0},width:width,height:height},
-        objects:[obj1]
+        window: rectangle::create(0,0,width*PRECISION,height*PRECISION),
+        repeat: 10,
+        objects: vector::push(vector::Vector<Object>(),obj1)
     }
 
-public export function update(State s)->State:
+/**
+ * Update the game based on the current keyboard state.
+ */
+public export function update(keyboard::State input, State s)->State:
     //
-    Object ship = s.objects[0]
-    ship.angle = (ship.angle + 2) % 360
-    ship = move(ship,s.window)
-    s.objects[0] = ship    
+    if s.repeat > 0:
+        s.repeat = s.repeat - 1
+    //
+    Object ship = vector::get(s.objects,0)
+    // Update angle
+    if input[keyboard::LEFTARROW]:
+        ship.angle = (ship.angle - 5) % 360
+    else if input[keyboard::RIGHTARROW]:
+        ship.angle = (ship.angle + 5) % 360
+    // Add thrust
+    if input[keyboard::UPARROW]:
+        // Detemine unit vector in direction ship is facing.
+        Vec2D vec = vec2d::unit(ship.angle,PRECISION)
+        // Translate direction vector by this amount
+        ship.direction = vec2d::add(ship.direction,vec)
+    // Update ship
+    s.objects = vector::set(s.objects,0,ship)
+    // Check for firing
+    if input[keyboard::SPACEBAR] && s.repeat == 0:
+        // Add new bullet object to system
+        s.objects = vector::push(s.objects,bullet(ship.origin,ship.angle))
+        s.repeat = 10
+    // Move all objects within the system    
+    int i = 0
+    while i < vector::size(s.objects) where i >= 0:
+        Object o = vector::get(s.objects,i)
+        o = object::move(o,s.window)
+        s.objects = vector::set(s.objects,i,o)
+        i = i + 1
+    //
     return s
 
+/**
+ * Draw the current state of the game to a given canvas element.
+ */
 public export method draw(HTMLCanvasElement canvas, State state):
     CanvasRenderingContext2D ctx = canvas->getContext(from_string("2d"))
     // Clear the screen
-    int sx = state.window.origin.x
-    int sy = state.window.origin.y
+    int sx = state.window.x
+    int sy = state.window.y
     ctx->clearRect(sx,sy,state.window.width,state.window.height)
     // Draw each object on the screen
     int i=0
-    while i < |state.objects| where i >= 0:
-        Object ith = state.objects[i]
+    while i < vector::size(state.objects) where i >= 0:
+        Object ith = vector::get(state.objects,i)
         // Scale polygon to required size
-        Polygon p = scale(ith.polygon,ith.scale)
+        Polygon p = polygon::scale(ith.polygon,ith.scale)
         // Rotate about origin
-        p = rotate(p,ith.angle)
+        p = polygon::rotate(p,ith.angle)
         // Translate to actual location
-        p = translate(p,ith.origin)
+        p = polygon::translate(p,ith.origin)
         // Finally, draw it
-        draw_polygon(ctx,"#dddddd","#00",p)
+        object::draw(ctx,"#dddddd","#00",p)
         i = i + 1
     //
 
-method draw_polygon(CanvasRenderingContext2D ctx, string fill, string line, Point[] points)
-requires |points| > 0:
-    ctx->fillStyle = from_string(fill)
-    ctx->strokeStyle = from_string(line)
-    ctx->lineWidth = 3
-    ctx->beginPath()
-    // Move to start
-    ctx->moveTo(points[0].x, points[0].y)
-    uint i = 1
-    while i < |points|:
-        ctx->lineTo(points[i].x, points[i].y)
-        i = i + 1
-    ctx->closePath()
-    // Fill contents
-    ctx->fill()
-    // Draw outline
-    ctx->stroke()
-    
