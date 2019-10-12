@@ -1,3 +1,5 @@
+import std::ascii
+import std::array
 import string from std::ascii
 import uint from std::integer
 
@@ -40,14 +42,11 @@ public type State is {
     Vector<Object> objects
 } where objects.length > 0
 
-public final Polygon SHIP = [{x:-3,y:-3},{x:0,y:6},{x:3,y:-3}]
-public final Polygon BULLET = [{x:-1,y:-1},{x:-1,y:1},{x:1,y:1},{x:1,y:-1}]
-
 /**
  * Construct a bullet being fired in a given angle
  */
 function bullet(Point p, int angle) -> Object:
-    Object bullet = object::create(BULLET)
+    Object bullet = object::create(object::BULLET)
     // Set scale
     bullet.scale = 5 * PRECISION
     // Set location
@@ -61,7 +60,7 @@ function bullet(Point p, int angle) -> Object:
  * Intialise the game in a window with given dimensions.
  */
 public export function init(uint width, uint height) -> State:
-    Object obj1 = object::create(SHIP)
+    Object obj1 = object::create(object::SHIP)
     obj1.scale = 5 * PRECISION
     obj1.origin = {x:(PRECISION*width)/2,y:(PRECISION*height)/2}
     //
@@ -78,14 +77,33 @@ public export function update(keyboard::State input, State s)->State:
     //
     if s.repeat > 0:
         s.repeat = s.repeat - 1
+    // Update ship based on user input
+    s = update_ship(input,s)
+    // Clip any bullets out of the window
+    s = clip_bullets(s)
+    // Move all objects within the system    
+    int i = 0
+    while i < vector::size(s.objects) where i >= 0:
+        Object o = vector::get(s.objects,i)
+        o = object::move(o,s.window)
+        s.objects = vector::set(s.objects,i,o)
+        i = i + 1
     //
+    return s
+
+/**
+ * Update the ship based on user input.  For example, rotate the ship
+ * if the user has pressed the left or right arrow keys.  Likewise,
+ * create new bullets if the spacebar is pressed.
+ */
+function update_ship(keyboard::State input, State s)->State:
     Object ship = vector::get(s.objects,0)
-    // Update angle
+    // Update angle (if left or right pressed_
     if input[keyboard::LEFTARROW]:
         ship.angle = (ship.angle - 5) % 360
     else if input[keyboard::RIGHTARROW]:
         ship.angle = (ship.angle + 5) % 360
-    // Add thrust
+    // Add thrust (if uparrow pressed)
     if input[keyboard::UPARROW]:
         // Detemine unit vector in direction ship is facing.
         Vec2D vec = vec2d::unit(ship.angle,PRECISION)
@@ -98,15 +116,32 @@ public export function update(keyboard::State input, State s)->State:
         // Add new bullet object to system
         s.objects = vector::push(s.objects,bullet(ship.origin,ship.angle))
         s.repeat = 10
-    // Move all objects within the system    
-    int i = 0
-    while i < vector::size(s.objects) where i >= 0:
+    // Done
+    return s
+
+/**
+ * Remove any bullets which have moved beyond the bounds of the
+ * window.
+ */
+function clip_bullets(State s) -> State:
+    uint i = 0
+    while i < vector::size(s.objects):
         Object o = vector::get(s.objects,i)
-        o = object::move(o,s.window)
-        s.objects = vector::set(s.objects,i,o)
-        i = i + 1
+        // Check whether bullet still visible.  Technically, we should
+        // use the bounding box for this operation.  However, I just* use
+        // the origin since, for bullets, it doesn't really matter.
+        if o.type == object::BULLET && !rectangle::contains(s.window,o.origin):
+            // Swap bullet with last object
+            Object last = vector::top(s.objects)
+            // remove last object
+            s.objects = vector::pop(s.objects)
+            // Replace this object with last
+            s.objects = vector::set(s.objects,i,last)
+        else:
+            i = i + 1
     //
     return s
+
 
 /**
  * Draw the current state of the game to a given canvas element.
@@ -121,8 +156,10 @@ public export method draw(HTMLCanvasElement canvas, State state):
     int i=0
     while i < vector::size(state.objects) where i >= 0:
         Object ith = vector::get(state.objects,i)
-        // Scale polygon to required size
-        Polygon p = polygon::scale(ith.polygon,ith.scale)
+        // Determine polygon for object
+        Polygon p = object::SHAPES[ith.type]
+        // Scale polygon to required size        
+        p = polygon::scale(p,ith.scale)
         // Rotate about origin
         p = polygon::rotate(p,ith.angle)
         // Translate to actual location
@@ -131,4 +168,11 @@ public export method draw(HTMLCanvasElement canvas, State state):
         object::draw(ctx,"#dddddd","#00",p)
         i = i + 1
     //
+    // Write debugging text (if applicable)
+    ctx->fillStyle = from_string("#000000")
+    ctx->font = from_string("30px Lucida Console")
+    // Determine string
+    ascii::string objects = ascii::to_string(vector::size(state.objects))
+    ascii::string status = array::replace_all("{} objects","{}",objects)
+    ctx->fillText(from_string(status),10,30)
 
