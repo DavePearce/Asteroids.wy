@@ -1,5 +1,6 @@
 import std::ascii
 import std::array
+import random from js::math
 import string from std::ascii
 import uint from std::integer
 
@@ -43,31 +44,35 @@ public type State is {
 } where objects.length > 0
 
 /**
- * Construct a bullet being fired in a given angle
- */
-function bullet(Point p, int angle) -> Object:
-    Object bullet = object::create(object::BULLET)
-    // Set scale
-    bullet.scale = 5 * PRECISION
-    // Set location
-    bullet.origin = p
-    // Detemine direction vector
-    bullet.direction = vec2d::unit(angle,10*PRECISION)
-    //
-    return bullet
-
-/**
  * Intialise the game in a window with given dimensions.
  */
-public export function init(uint width, uint height) -> State:
-    Object obj1 = object::create(object::SHIP)
-    obj1.scale = 5 * PRECISION
-    obj1.origin = {x:(PRECISION*width)/2,y:(PRECISION*height)/2}
+public export method init(uint width, uint height) -> State:
+    // Create ship (fixed location)
+    Object ship = object::create(object::SHIP)
+    ship.scale = 5 * PRECISION
+    ship.origin = {x:(PRECISION*width)/2,y:(PRECISION*height)/2}
+    // Create asteroid 1 (random location)
+    Object asteroid_1 = object::create(object::ASTEROID)
+    asteroid_1.scale = 30 * PRECISION
+    asteroid_1.origin = {x:random(width),y:random(width)}
+    asteroid_1.direction = vec2d::unit(random(360),PRECISION)
+    // Create asteroid 2 (random location)
+    Object asteroid_2 = object::create(object::ASTEROID)
+    asteroid_2.scale = 30 * PRECISION
+    asteroid_2.origin = {x:random(width),y:random(height)}
+    asteroid_2.direction = vec2d::unit(random(360),PRECISION)    
+    // Construct object vector
+    Vector<Object> objects = vector::Vector<Object>()
+    // Ship always first entry
+    objects = vector::push(objects,ship)
+    // Asteroids come next
+    objects = vector::push(objects,asteroid_1)
+    objects = vector::push(objects,asteroid_2)
     //
     return {
         window: rectangle::create(0,0,width*PRECISION,height*PRECISION),
         repeat: 10,
-        objects: vector::push(vector::Vector<Object>(),obj1)
+        objects: objects
     }
 
 /**
@@ -120,6 +125,20 @@ function update_ship(keyboard::State input, State s)->State:
     return s
 
 /**
+ * Construct a bullet being fired in a given angle
+ */
+function bullet(Point p, int angle) -> Object:
+    Object bullet = object::create(object::BULLET)
+    // Set scale
+    bullet.scale = 5 * PRECISION
+    // Set location
+    bullet.origin = p
+    // Detemine direction vector
+    bullet.direction = vec2d::unit(angle,10*PRECISION)
+    //
+    return bullet
+
+/**
  * Remove any bullets which have moved beyond the bounds of the
  * window.
  */
@@ -148,24 +167,36 @@ function clip_bullets(State s) -> State:
  */
 public export method draw(HTMLCanvasElement canvas, State state):
     CanvasRenderingContext2D ctx = canvas->getContext(from_string("2d"))
+    Rectangle window = state.window
     // Clear the screen
-    int sx = state.window.x
-    int sy = state.window.y
-    ctx->clearRect(sx,sy,state.window.width,state.window.height)
+    int sx = window.x
+    int sy = window.y
+    ctx->clearRect(sx,sy,window.width,window.height)
     // Draw each object on the screen
     int i=0
     while i < vector::size(state.objects) where i >= 0:
         Object ith = vector::get(state.objects,i)
         // Determine polygon for object
-        Polygon p = object::SHAPES[ith.type]
-        // Scale polygon to required size        
-        p = polygon::scale(p,ith.scale)
-        // Rotate about origin
-        p = polygon::rotate(p,ith.angle)
-        // Translate to actual location
-        p = polygon::translate(p,ith.origin)
+        Polygon p1 = object::project(ith)
         // Finally, draw it
-        object::draw(ctx,"#dddddd","#00",p)
+        object::draw(ctx,"#dddddd","#00",p1)
+        // Determine bounding box
+        Rectangle bbox = polygon::bounding_box(p1)
+        // Draw X shadow (if applicable)
+        if bbox.x < window.x:
+            Polygon p2 = polygon::translate(p1,{dx:window.width,dy:0})
+            object::draw(ctx,"#dddddd","#00",p2)
+        else if (bbox.x+bbox.width) > (window.x+window.width):
+            Polygon p2 = polygon::translate(p1,{dx:-window.width,dy:0})
+            object::draw(ctx,"#dddddd","#00",p2)
+        // Draw Y shaow (if applicable)
+        if bbox.y < window.y:
+            Polygon p2 = polygon::translate(p1,{dx:0,dy:window.width})
+            object::draw(ctx,"#dddddd","#00",p2)
+        else if (bbox.y+bbox.height) > (window.y+window.height):
+            Polygon p2 = polygon::translate(p1,{dx:0,dy:-window.width})
+            object::draw(ctx,"#dddddd","#00",p2)        
+        //
         i = i + 1
     //
     // Write debugging text (if applicable)

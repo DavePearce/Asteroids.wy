@@ -1,4 +1,7 @@
+import std::math
 import uint from std::integer
+import rectangle
+import Rectangle from rectangle
 import point
 import Point from point
 import Vec2D from vec2d
@@ -74,4 +77,24 @@ requires angle <= 360:
     //
     return polygon
 
-    
+/**
+ * Determine the smallest bounding box for a given polygon.
+ */
+public function bounding_box(Polygon polygon) -> Rectangle:
+    int min_x = polygon[0].x
+    int max_x = polygon[0].x
+    int min_y = polygon[0].y
+    int max_y = polygon[0].y
+    //
+    int i = 1
+    while i < |polygon|:
+        min_x = math::min(min_x,polygon[i].x)
+        max_x = math::max(max_x,polygon[i].x)
+        min_y = math::min(min_y,polygon[i].y)
+        max_y = math::max(max_y,polygon[i].y)
+        i = i + 1
+    //
+    int width = (max_x-min_x) + 1
+    int height = (max_y-min_y) + 1
+    //
+    return rectangle::create(min_x,min_y,width,height)

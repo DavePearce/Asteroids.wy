@@ -6,6 +6,7 @@ import from_string from js::util
 import main
 import point
 import rectangle
+import polygon
 import Point from point
 import Vec2D from vec2d
 import Polygon from polygon
@@ -14,6 +15,7 @@ import Rectangle from rectangle
 public final int SHIP = 0
 public final int SHIP_THURSTING = 1
 public final int BULLET = 2
+public final int ASTEROID = 3
 
 public final Polygon[] SHAPES = [
     // Ship
@@ -21,7 +23,9 @@ public final Polygon[] SHAPES = [
     // Ship Thrusting
     [{x:-3,y:-3},{x:0,y:6},{x:3,y:-3}],
     // Bullet
-    [{x:-1,y:-1},{x:-1,y:1},{x:1,y:1},{x:1,y:-1}]    
+    [{x:-1,y:-1},{x:-1,y:1},{x:1,y:1},{x:1,y:-1}],
+    // Asteroid 1
+    [{x:-1,y:3},{x:2,y:3},{x:3,y:0},{x:2,y:-1},{x:2,y:-3},{x:-2,y:-2},{x:-3,y:0}]
 ]
 
 /**
@@ -56,6 +60,20 @@ public function move(Object o, Rectangle window) -> Object:
         o.origin = rectangle::wrap(o.origin, window)
     //
     return o
+
+/**
+ * Project the polygons of a given object onto the screen.
+ */
+public function project(Object ith) -> Polygon:
+   Polygon p = SHAPES[ith.type]
+   // Scale polygon to required size        
+   p = polygon::scale(p,ith.scale)
+   // Rotate about origin
+   p = polygon::rotate(p,ith.angle)
+   // Translate to actual location
+   return polygon::translate(p,ith.origin)
+
+
 
 /**
  * Draw a given polygon onto a given canvas context.
