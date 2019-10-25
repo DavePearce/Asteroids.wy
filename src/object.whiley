@@ -4,13 +4,10 @@ import CanvasRenderingContext2D from w3c::dom
 import from_string from js::util
 
 import main
-import point
-import rectangle
-import polygon
-import Point from point
+import point with Point
+import rectangle with Rectangle
+import polygon with Polygon
 import Vec2D from vec2d
-import Polygon from polygon
-import Rectangle from rectangle
 
 public final int SHIP = 0
 public final int SHIP_THURSTING = 1

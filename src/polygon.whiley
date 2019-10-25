@@ -1,9 +1,7 @@
 import std::math
 import uint from std::integer
-import rectangle
-import Rectangle from rectangle
-import point
-import Point from point
+import rectangle with Rectangle
+import point with Point
 import Vec2D from vec2d
 
 /**

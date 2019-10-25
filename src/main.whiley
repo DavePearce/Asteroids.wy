@@ -4,8 +4,7 @@ import random from js::math
 import string from std::ascii
 import uint from std::integer
 
-import std::vector
-import Vector from std::vector
+import std::vector with Vector
 
 import from_string from js::util
 import Document from w3c::dom
@@ -13,19 +12,11 @@ import HTMLCanvasElement from w3c::dom
 import CanvasRenderingContext2D from w3c::dom
 
 import keyboard
-import vec2d
-import Vec2D from vec2d
-
-import Point from point
-
-import object
-import Object from object
-
-import polygon
-import Polygon from polygon
-
-import rectangle
-import Rectangle from rectangle
+import vec2d with Vec2D
+import point with Point
+import object with Object
+import polygon with Polygon
+import rectangle with Rectangle
 
 /** 
  * Precision determines the accuracy to which fixed decimal
@@ -51,29 +42,38 @@ public export method init(uint width, uint height) -> State:
     Object ship = object::create(object::SHIP)
     ship.scale = 5 * PRECISION
     ship.origin = {x:(PRECISION*width)/2,y:(PRECISION*height)/2}
-    // Create asteroid 1 (random location)
-    Object asteroid_1 = object::create(object::ASTEROID)
-    asteroid_1.scale = 30 * PRECISION
-    asteroid_1.origin = {x:random(width),y:random(width)}
-    asteroid_1.direction = vec2d::unit(random(360),PRECISION)
-    // Create asteroid 2 (random location)
-    Object asteroid_2 = object::create(object::ASTEROID)
-    asteroid_2.scale = 30 * PRECISION
-    asteroid_2.origin = {x:random(width),y:random(height)}
-    asteroid_2.direction = vec2d::unit(random(360),PRECISION)    
     // Construct object vector
     Vector<Object> objects = vector::Vector<Object>()
     // Ship always first entry
     objects = vector::push(objects,ship)
     // Asteroids come next
-    objects = vector::push(objects,asteroid_1)
-    objects = vector::push(objects,asteroid_2)
+    objects = vector::push(objects,create_random_asteroid(width,height))
+    objects = vector::push(objects,create_random_asteroid(width,height))
+    objects = vector::push(objects,create_random_asteroid(width,height))
     //
     return {
         window: rectangle::create(0,0,width*PRECISION,height*PRECISION),
         repeat: 10,
         objects: objects
     }
+
+/**
+ * Create an asteroid at a random location on the screen moving in a
+ * random direction.
+ */
+method create_random_asteroid(int width, int height) -> (Object r)
+ensures r.type == object::ASTEROID:
+    //
+    Object asteroid = object::create(object::ASTEROID)
+    // Set asteroid to be quite large
+    asteroid.scale = 30 * PRECISION
+    // Set random starting position
+    asteroid.origin = {x:random(PRECISION*width),y:random(PRECISION*height)}
+    // Set random starting direction
+    asteroid.direction = vec2d::unit(random(360),PRECISION)
+    //
+    return asteroid
+    
 
 /**
  * Update the game based on the current keyboard state.
