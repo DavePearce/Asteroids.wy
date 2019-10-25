@@ -1,6 +1,5 @@
 import uint from std::integer
-import sin from js::math
-import cos from js::math
+import sin, cos from js::math
 
 /** 
  * This module provides support for manpulating 2dimensional

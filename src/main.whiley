@@ -1,7 +1,6 @@
-import std::ascii
+import std::ascii with string
 import std::array
 import random from js::math
-import string from std::ascii
 import uint from std::integer
 
 import std::vector with Vector
