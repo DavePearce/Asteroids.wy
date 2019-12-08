@@ -126,7 +126,7 @@ function update_ship(keyboard::State input, State s)->State:
 /**
  * Construct a bullet being fired in a given angle
  */
-function bullet(Point p, int angle) -> Object:
+function bullet(Point p, uint angle) -> Object:
     Object bullet = object::create(object::BULLET)
     // Set scale
     bullet.scale = 5 * PRECISION

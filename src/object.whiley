@@ -41,7 +41,7 @@ public type Object is {
  * Construct a new object from a given polygon.  This will initially
  * be at the original with zero angle and no direction of movement.
  */
-public function create(int t) -> Object:
+public function create(uint t) -> Object:
     Vec2D zero = {dx:0,dy:0}
     Point o = {x:0,y:0}    
     return {type:t,origin:o,direction:zero,scale:1,angle:0}

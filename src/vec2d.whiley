@@ -11,7 +11,7 @@ public type Vec2D is { int dx, int dy }
 /**
  * Create a unit vector rotated by a given angle.
  */
-public function unit(uint angle, int magnitude) -> Vec2D
+public function unit(uint angle, uint magnitude) -> Vec2D
 requires angle <= 360:
     //
     int xp = - sin(angle,magnitude) 
