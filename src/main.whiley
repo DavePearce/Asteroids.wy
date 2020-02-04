@@ -42,7 +42,7 @@ public export method init(uint width, uint height) -> State:
     ship.scale = 5 * PRECISION
     ship.origin = {x:(PRECISION*width)/2,y:(PRECISION*height)/2}
     // Construct object vector
-    Vector<Object> objects = vector::Vector<Object>()
+    Vector<Object> objects = vector::Vector()
     // Ship always first entry
     objects = vector::push(objects,ship)
     // Asteroids come next
