@@ -1,5 +1,6 @@
 import uint from std::integer
-import sin, cos from js::math
+import number from js::core
+import sin, cos, to_radians from js::math
 
 /** 
  * This module provides support for manpulating 2dimensional
@@ -13,9 +14,13 @@ public type Vec2D is { int dx, int dy }
  */
 public function unit(uint angle, uint magnitude) -> Vec2D
 requires angle <= 360:
-    //
-    int xp = - sin(angle,magnitude) 
-    int yp = cos(angle,magnitude)
+    // Exploit native JavaScript methods
+    number rads = to_radians((number) angle)
+    number cos_rads = cos(rads) * magnitude
+    number sin_rads = sin(rads) * magnitude
+    // Back to Whiley land
+    int xp = -sin_rads
+    int yp = cos_rads
     return {dx:xp, dy:yp}
 
 /**

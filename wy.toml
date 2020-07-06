@@ -7,4 +7,5 @@ version="0.1.0"
 platforms=["whiley","js"]
 
 [dependencies]
-html="0.1.10"
+dom="0.1.0"
+

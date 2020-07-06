@@ -3,9 +3,8 @@ import std::array
 import random from js::math
 import uint from std::integer
 
-import std::vector with Vector
+import std::collections::vector with Vector
 
-import from_string from js::util
 import Document from w3c::dom
 import HTMLCanvasElement from w3c::dom
 import CanvasRenderingContext2D from w3c::dom
@@ -22,7 +21,7 @@ import rectangle with Rectangle
  * calculations are performed.  This matters because we don't 
  * have floating point numbers in Whiley.
  */
-final int PRECISION = 1000
+final uint PRECISION = 1000
 
 public type State is {
     // playing area
@@ -69,7 +68,7 @@ ensures r.type == object::ASTEROID:
     // Set random starting position
     asteroid.origin = {x:random(PRECISION*width),y:random(PRECISION*height)}
     // Set random starting direction
-    asteroid.direction = vec2d::unit(random(360),PRECISION)
+    asteroid.direction = vec2d::unit((uint) random(360),PRECISION)
     //
     return asteroid
     
@@ -165,7 +164,7 @@ function clip_bullets(State s) -> State:
  * Draw the current state of the game to a given canvas element.
  */
 public export method draw(HTMLCanvasElement canvas, State state):
-    CanvasRenderingContext2D ctx = canvas->getContext(from_string("2d"))
+    CanvasRenderingContext2D ctx = canvas->getContext("2d")
     Rectangle window = state.window
     // Clear the screen
     int sx = window.x
@@ -199,10 +198,10 @@ public export method draw(HTMLCanvasElement canvas, State state):
         i = i + 1
     //
     // Write debugging text (if applicable)
-    ctx->fillStyle = from_string("#000000")
-    ctx->font = from_string("30px Lucida Console")
+    ctx->fillStyle = "#000000"
+    ctx->font = "30px Lucida Console"
     // Determine string
     ascii::string objects = ascii::to_string(vector::size(state.objects))
     ascii::string status = array::replace_all("{} objects","{}",objects)
-    ctx->fillText(from_string(status),10,30)
+    ctx->fillText((js::core::string) status,10,30)
 

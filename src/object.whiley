@@ -1,7 +1,6 @@
 import uint from std::integer
-import string from std::ascii
+import string from js::core
 import CanvasRenderingContext2D from w3c::dom
-import from_string from js::util
 
 import main
 import point with Point
@@ -9,10 +8,10 @@ import rectangle with Rectangle
 import polygon with Polygon
 import Vec2D from vec2d
 
-public final int SHIP = 0
-public final int SHIP_THURSTING = 1
-public final int BULLET = 2
-public final int ASTEROID = 3
+public final uint SHIP = 0
+public final uint SHIP_THURSTING = 1
+public final uint BULLET = 2
+public final uint ASTEROID = 3
 
 public final Polygon[] SHAPES = [
     // Ship
@@ -77,8 +76,8 @@ public function project(Object ith) -> Polygon:
  */
 public method draw(CanvasRenderingContext2D ctx, string fill, string line, Point[] points)
 requires |points| > 0:
-    ctx->fillStyle = from_string(fill)
-    ctx->strokeStyle = from_string(line)
+    ctx->fillStyle = fill
+    ctx->strokeStyle = line
     ctx->lineWidth = 3
     ctx->beginPath()
     // Move to start

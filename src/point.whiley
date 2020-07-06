@@ -2,8 +2,8 @@
 import std::ascii
 import uint from std::integer
 import Vec2D from vec2d
-import sin from js::math
-import cos from js::math
+import cos,sin,to_radians from js::math
+import number from js::core
 
 // =====================================================
 // Points
@@ -11,7 +11,7 @@ import cos from js::math
 
 public type Point is { int x, int y }
 
-public function scale(Point point, uint magnitude) -> Point:
+public function scale(Point point, uint magnitude) -> Point:    
     point.x = point.x * magnitude
     point.y = point.y * magnitude
     return point
@@ -27,6 +27,11 @@ public function translate(Point point, Point origin) -> Point:
     return point
 
 public function rotate(Point point, uint angle) -> Point:
-    int xp = (point.x * cos(angle,100)) - (point.y * sin(angle,100)) 
-    int yp = (point.y * cos(angle,100)) + (point.x * sin(angle,100)) 
-    return {x:(xp/100),y:(yp/100)}
+    // Exploit native JavaScript methods
+    number rads = to_radians((number) angle)
+    number cos_rads = cos(rads)*100
+    number sin_rads = sin(rads)*100
+    // Back to Whiley land
+    int xp = (point.x * cos_rads) - (point.y * sin_rads) 
+    int yp = (point.y * cos_rads) + (point.x * sin_rads) 
+    return {x:xp/100,y:yp/100}
